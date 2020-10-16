@@ -1,17 +1,19 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
+    <div>
+      <h1> 勝手にぬりえ </h1>
+    </div>
+    <NurieView modelPath="/jsmodel/model.json" />
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import HelloWorld from './components/HelloWorld.vue';
+import { Component, Vue } from 'vue-property-decorator'
+import NurieView from './components/NurieView.vue'
 
 @Component({
   components: {
-    HelloWorld,
+    NurieView
   },
 })
 export default class App extends Vue {}
