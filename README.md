@@ -1,4 +1,4 @@
-# nurie-app
+# nurie-pix2pix
 
 ## Project setup
 ```
@@ -16,5 +16,4 @@ npm run build
 ```
 
 ### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
-# nurie-pix2pix
+See [Configuration Reference](https://cli.vuejs.org/config/)
