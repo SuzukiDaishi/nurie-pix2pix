@@ -1,8 +1,11 @@
 <template>
     <div class="nurie-view">
         <button class="nurie-view_load-button" @click="onClick"> {{ !generaterModel ? 'モデル読み込み': 'モデル読み込み済み' }} </button>
-        <button class="nurie-view_load-button" @click="convertImage"> 変換 </button>
-        <button class="nurie-view_load-button" @click="onClickLoadModel"> ポケモン書き込み </button>
+        <button class="nurie-view_load-button" @click="convertImage"> 
+            {{ convertText }}
+        </button>
+        <button class="nurie-view_load-button" @click="onClickLoadEdge"> ポケモン書き込み </button>
+        <button class="nurie-view_load-button" @click="clearImage"> 消す </button>
         <div class="nurie-view_edits">
             <div>
                 <canvas ref="srcCanvas" class="nurie-view_canvas" width="256px" height="256px" @mousemove="canvasDraw" @mousedown="canvasDragStart" @mouseup="canvasDragEnd" @mouseout="canvasDragEnd" />
@@ -33,6 +36,8 @@ export default class NurieView extends Vue {
     outCanvas: HTMLCanvasElement | null = null
     outCtx: CanvasRenderingContext2D | null = null
 
+    convertText: string = '先にモデルを読み込んで'
+
 
     mounted() {
         this.canvasInit()
@@ -42,11 +47,15 @@ export default class NurieView extends Vue {
     onClick() {
         if ( !this.generaterModel ) {
             this.loadModel(this.modelPath)
+            .then( () => this.convertText = '変換' )
         }
     }
 
-    onClickLoadModel() {
-        this.loadImage('/examples/edges/001.png')
+    onClickLoadEdge() {
+        const max = 21, min = 1
+        const number = Math.floor(Math.random() * (max - min)) + min
+        const numStr = ( '000' + number ).slice( -3 )
+        this.loadImage(`/examples/edges/${numStr}.png`)
     }
     
     async loadModel(modelPath: string) {
@@ -105,13 +114,30 @@ export default class NurieView extends Vue {
         }
     }
 
-    convertImage() {
-        if ( !!this.canvas && !!this.ctx && !!this.generaterModel ) {
+    async convertImage() {
+        if ( !!this.canvas && !!this.ctx && !!this.generaterModel && !!this.outCtx ) {
+            this.convertText = '変換中...'
             const imageData = this.ctx.getImageData(0, 0, 256, 256)
-            const edge      = tf.browser.fromPixels(imageData, 1).reshape([1, 256, 256, 1]).div(255)
-            const out       = (<tf.Tensor>this.generaterModel.predict(edge)).reshape([256, 256, 3]).mul(255)
+            const outImage  = await this.convert(imageData)
+            this.outCtx.putImageData(outImage, 0, 0)
+            this.convertText = '変換'
+        }
+    }
+
+    async convert(image: ImageData): Promise<ImageData> {
+        return new Promise( (res, rej) => {
+            if ( !this.generaterModel ) return rej('失敗')
+            const edge = tf.browser.fromPixels(image, 1).reshape([1, 256, 256, 1]).div(255)
+            const out  = (<tf.Tensor>this.generaterModel.predict(edge)).reshape([256, 256, 3]).mul(255)
             const outImage  = this.toPixels(<tf.Tensor3D>out)
-            if ( !!this.outCtx ) this.outCtx.putImageData(outImage, 0, 0)
+            return res(outImage)
+        })
+    }
+
+    clearImage() {
+        if ( !!this.ctx ) {
+            this.ctx.fillStyle = 'white'
+            this.ctx.fillRect(0, 0, 256, 256)
         }
     }
 
